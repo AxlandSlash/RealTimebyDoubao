@@ -79,8 +79,32 @@ export default function VoiceCallApp() {
             setShowSettings(false)
           }
         },
-        onTranscript: (text) => {
-          setTranscripts(prev => [...prev, { role: 'user', text, time: new Date() }])
+        onTranscript: (text, isInterim) => {
+          if (isInterim) {
+            // 实时识别结果，更新最后一条或添加新的
+            setTranscripts(prev => {
+              if (prev.length > 0 && prev[prev.length - 1].isInterim) {
+                // 更新最后一条
+                const updated = [...prev]
+                updated[updated.length - 1] = { role: 'user', text, time: new Date(), isInterim: true }
+                return updated
+              } else {
+                // 添加新的临时记录
+                return [...prev, { role: 'user', text, time: new Date(), isInterim: true }]
+              }
+            })
+          } else {
+            // 最终结果，替换临时记录或添加新的
+            setTranscripts(prev => {
+              if (prev.length > 0 && prev[prev.length - 1].isInterim) {
+                const updated = [...prev]
+                updated[updated.length - 1] = { role: 'user', text, time: new Date(), isInterim: false }
+                return updated
+              } else {
+                return [...prev, { role: 'user', text, time: new Date(), isInterim: false }]
+              }
+            })
+          }
         },
         onResponse: (text) => {
           setResponses(prev => [...prev, { role: 'assistant', text, time: new Date() }])
@@ -355,9 +379,10 @@ export default function VoiceCallApp() {
               </div>
             ) : (
               allMessages.map((msg, idx) => (
-                <div key={idx} className={`chat-message ${msg.role}`}>
+                <div key={idx} className={`chat-message ${msg.role} ${msg.isInterim ? 'interim' : ''}`}>
                   <div className="message-bubble">
                     {msg.text}
+                    {msg.isInterim && <span className="interim-indicator">...</span>}
                   </div>
                 </div>
               ))

@@ -19,10 +19,11 @@ import {
   CONNECTION_STARTED,
   SESSION_STARTED,
   SESSION_FINISHED,
-  TTS_AUDIO,
-  CLEAR_AUDIO,
+  TTS_SENTENCE_START,
   TTS_ENDED,
-  USER_QUERY_END,
+  USER_SPEECH_STARTED,
+  ASR_RESULT,
+  USER_SPEECH_ENDED,
   SERVER_FULL_RESPONSE,
   SERVER_ACK,
   SERVER_ERROR_RESPONSE
@@ -329,18 +330,38 @@ export class VoiceCallService {
         this._setState(ConnectionState.CONNECTED)
         break
 
-      case CLEAR_AUDIO:
-        // 清空音频缓存
-        console.log('Clearing audio queue')
+      case USER_SPEECH_STARTED:
+        // 用户开始说话，清空音频缓存
+        console.log('User speech started, clearing audio queue')
         this.audioQueue = []
         this.isClearingAudio = true
         this.audioPlayer.stop()
         break
 
-      case USER_QUERY_END:
-        // 用户查询结束，可以继续播放音频
+      case ASR_RESULT:
+        // 语音识别结果
+        if (payloadMsg.results && payloadMsg.results.length > 0) {
+          const text = payloadMsg.results[0].text
+          const isInterim = payloadMsg.results[0].is_interim
+          console.log('ASR Result:', text, isInterim ? '(interim)' : '(final)')
+          // 调用回调显示用户说的话
+          this.config.onTranscript(text, isInterim)
+        }
+        break
+
+      case USER_SPEECH_ENDED:
+        // 用户说话结束，可以继续播放音频
+        console.log('User speech ended')
         this.isClearingAudio = false
         this._playNextInQueue()
+        break
+
+      case TTS_SENTENCE_START:
+        // TTS 句子开始
+        if (payloadMsg.text) {
+          console.log('TTS sentence start:', payloadMsg.text)
+          this.config.onResponse(payloadMsg.text)
+        }
         break
 
       case TTS_ENDED:

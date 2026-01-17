@@ -43,10 +43,12 @@ export const CHAT_RAG_TEXT = 502
 export const CONNECTION_STARTED = 50
 export const SESSION_STARTED = 150
 export const SESSION_FINISHED = 152
-export const TTS_AUDIO = 350
-export const CLEAR_AUDIO = 450
+export const TTS_SENTENCE_START = 350
+export const TTS_SENTENCE_END = 351
 export const TTS_ENDED = 359
-export const USER_QUERY_END = 459
+export const USER_SPEECH_STARTED = 450
+export const ASR_RESULT = 451  // 语音识别结果
+export const USER_SPEECH_ENDED = 459
 
 /**
  * 生成协议头部
